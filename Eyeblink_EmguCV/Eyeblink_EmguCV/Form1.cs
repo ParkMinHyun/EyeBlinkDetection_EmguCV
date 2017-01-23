@@ -80,10 +80,10 @@ namespace Eyeblink_EmguCV
                 System.Drawing.Point lowerEyesPointOptimized = new System.Drawing.Point(face.rect.X, yCoordStartSearchEyes + searchEyesAreaSize.Height);
                 System.Drawing.Point startingLeftEyePointOptimized = new System.Drawing.Point(face.rect.X + face.rect.Width / 2, yCoordStartSearchEyes);
 
-                Rectangle leftEyeArea = new Rectangle(new System.Drawing.Point(startingPointSearchEyes.X + 25, startingPointSearchEyes.Y + 15),
-                                                     new Size(eyeAreaSize.Width - 25, eyeAreaSize.Height - 25));
-                Rectangle rightEyeArea = new Rectangle(new System.Drawing.Point(startingLeftEyePointOptimized.X + 5, startingLeftEyePointOptimized.Y + 15),
-                                                     new Size(eyeAreaSize.Width - 33, eyeAreaSize.Height - 25));
+                Rectangle leftEyeArea = new Rectangle(new System.Drawing.Point(startingPointSearchEyes.X + 25, startingPointSearchEyes.Y + 10),
+                                                     new Size(eyeAreaSize.Width - 25, eyeAreaSize.Height - 20));
+                Rectangle rightEyeArea = new Rectangle(new System.Drawing.Point(startingLeftEyePointOptimized.X + 5, startingLeftEyePointOptimized.Y + 10),
+                                                     new Size(eyeAreaSize.Width - 33, eyeAreaSize.Height - 20));
                 #endregion
 
                 #region 눈 영역 그리기
@@ -106,7 +106,45 @@ namespace Eyeblink_EmguCV
                 #endregion 
             }// if(faceDetect[0])
 
+            #region 눈 영역이 Null이 아닐 경우
+            if (possibleROI_rightEye.IsEmpty.Equals(false) && possibleROI_leftEye.IsEmpty.Equals(false))
+            {
+                try
+                {
+                    imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
 
+                    var Thimage = (Bitmap)imageBox1.Image.Bitmap;
+                    IFilter threshold = new Threshold(70);
+                    Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
+                    Thimage = threshold.Apply(Thimage);
+                    Image<Bgr, Byte> myImage = new Image<Bgr, Byte>(Thimage);
+
+                    pictureBox1.Image = Thimage;
+                    newBitmap = myImage.Bitmap;
+
+                    Median filter = new Median();
+                    filter.ApplyInPlace(newBitmap);
+
+                    ConservativeSmoothing filter2 = new ConservativeSmoothing();
+                    filter.ApplyInPlace(newBitmap);
+
+
+                    pictureBox1.Image = newBitmap;
+                    //blurEffect();
+                }
+                catch (ArgumentException expt) { }
+
+                #region Thread 이용하여 RGB평균값 계산
+                //Worker worker = new Worker(imageBox2, frame, possibleROI_rightEye, label4, label5, label6);
+                //Thread workerThread = new Thread(worker.calculateRGB_Eye);
+
+                //if (!workerThread.IsAlive)
+                //{
+                //    workerThread.Start();
+                //}
+                #endregion
+            }
+            #endregion
 
         }//FrameGrabber
 
