@@ -1,0 +1,1 @@
+c:\users\blackman\documents\visual studio 2015\Projects\Eyeblink_EmguCV\Eyeblink_EmguCV\bin\Debug\Eyeblink_EmguCV.exe.config
