@@ -88,9 +88,9 @@ namespace Eyeblink_EmguCV
                     imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
                 }
                 catch (ArgumentException expt) { }
-                //Form1.catchBlackPixel = false;
-                //ThresholdValue = 30;
-                //thresholdEffect(ThresholdValue);
+                Form1.catchBlackPixel = false;
+                ThresholdValue = 50;
+                thresholdEffect(ThresholdValue);
 
                 // 비동기(Async)로 실행 
                 //worker.RunWorkerAsync(ThresholdValue);
@@ -111,6 +111,8 @@ namespace Eyeblink_EmguCV
             IFilter threshold = new Threshold(catchThreshold);
             Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
             Thimage = threshold.Apply(Thimage);
+            if (Thimage.Width > 50)
+                Thimage = ResizeImage(Thimage, new Size(50, 30));
 
             Median filter = new Median();
             filter.ApplyInPlace(Thimage);
@@ -149,7 +151,7 @@ namespace Eyeblink_EmguCV
             }
             else
             {
-                if (catchThreshold < 70)
+                if (catchThreshold < 95)
                 {
                     label3.Text = catchThreshold.ToString();
                     catchThreshold += 1;
@@ -219,6 +221,17 @@ namespace Eyeblink_EmguCV
 
         private void trackBar2_Scroll(object sender, EventArgs e)
         {
+        }
+
+        private static Bitmap ResizeImage(Bitmap image, Size newSize)
+        {
+            Bitmap newImage = new Bitmap(newSize.Width, newSize.Height);
+            using (Graphics g = Graphics.FromImage((System.Drawing.Image)newImage))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(image, 0, 0, newSize.Width, newSize.Height);
+            }
+            return newImage;
         }
     }
 
