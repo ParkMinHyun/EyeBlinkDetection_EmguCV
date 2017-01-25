@@ -22,7 +22,6 @@ namespace Eyeblink_EmguCV
 {
     public partial class Form1 : Form
     {
-
         private Capture _capture;
         private HaarCascade _faces;
         private Image<Bgr, Byte> frame;
@@ -31,8 +30,14 @@ namespace Eyeblink_EmguCV
         private LineSegment2D a, b, c;
         private Bgr d;
 
-        private Bitmap newBitmap;
+        private Bitmap Thimage;
+        private BackgroundWorker worker;
+
         private int blurAmount = 1;
+        private int ThresholdValue = 30;
+
+
+        public static Boolean catchBlackPixel = false;
 
         public Form1()
         {
@@ -45,6 +50,13 @@ namespace Eyeblink_EmguCV
                 {
                     _capture = new Capture();
                     _faces = new HaarCascade("C:\\haarcascade_frontalface_alt_tree.xml");
+
+                    //worker = new BackgroundWorker();
+                    //worker.WorkerReportsProgress = true;
+                    //worker.WorkerSupportsCancellation = true;
+                    //worker.DoWork += new DoWorkEventHandler(worker_DoWork);
+                    //worker.ProgressChanged += new ProgressChangedEventHandler(worker_ProgressChanged);
+                    //worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(worker_RunWorkerCompleted);
                 }
                 catch (NullReferenceException excpt) { }
             }
@@ -109,44 +121,102 @@ namespace Eyeblink_EmguCV
             #region 눈 영역이 Null이 아닐 경우
             if (possibleROI_rightEye.IsEmpty.Equals(false) && possibleROI_leftEye.IsEmpty.Equals(false))
             {
-                try
-                {
-                    imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
+                imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
 
-                    var Thimage = (Bitmap)imageBox1.Image.Bitmap;
-                    IFilter threshold = new Threshold(70);
-                    Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
-                    Thimage = threshold.Apply(Thimage);
-                    Image<Bgr, Byte> myImage = new Image<Bgr, Byte>(Thimage);
+                Form1.catchBlackPixel = false;
+                ThresholdValue = 30;
+                // 비동기(Async)로 실행 
+                //worker.RunWorkerAsync(ThresholdValue);
 
-                    pictureBox1.Image = Thimage;
-                    newBitmap = myImage.Bitmap;
+                blurEffect(ThresholdValue);
 
-                    Median filter = new Median();
-                    filter.ApplyInPlace(newBitmap);
-
-                    ConservativeSmoothing filter2 = new ConservativeSmoothing();
-                    filter.ApplyInPlace(newBitmap);
-
-
-                    pictureBox1.Image = newBitmap;
-                    //blurEffect();
-                }
-                catch (ArgumentException expt) { }
-
-                #region Thread 이용하여 RGB평균값 계산
-                //Worker worker = new Worker(imageBox2, frame, possibleROI_rightEye, label4, label5, label6);
-                //Thread workerThread = new Thread(worker.calculateRGB_Eye);
-
-                //if (!workerThread.IsAlive)
-                //{
-                //    workerThread.Start();
-                //}
-                #endregion
+                pictureBox1.Image = Thimage;
             }
             #endregion
+        }//FrameGrapper
 
-        }//FrameGrabber
+        public void blurEffect(int catchThreshold)
+        {
+            if (Form1.catchBlackPixel.Equals(true))
+            {
+                return;
+            }
+            Thimage = (Bitmap)imageBox1.Image.Bitmap;
+            IFilter threshold = new Threshold(catchThreshold);
+            Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
+            Thimage = threshold.Apply(Thimage);
 
+            Median filter = new Median();
+            filter.ApplyInPlace(Thimage);
+            ConservativeSmoothing filter2 = new ConservativeSmoothing();
+            filter.ApplyInPlace(Thimage);
+
+            for (int x = blurAmount + 5; x <= Thimage.Width - blurAmount; x++)
+            {
+                for (int y = blurAmount + 5; y <= Thimage.Height - blurAmount; y++)
+                {
+                    try
+                    {
+                        Color prevX = Thimage.GetPixel(x - blurAmount, y);
+                        Color nextX = Thimage.GetPixel(x + blurAmount, y);
+                        Color prevY = Thimage.GetPixel(x, y - blurAmount);
+                        Color nextY = Thimage.GetPixel(x, y + blurAmount);
+
+                        int avgR = (int)((prevX.R + nextX.R + prevY.R + nextY.R) / 4);
+                        if (avgR < 150)
+                        {
+                            //Thimage.SetPixel(x, y, Color.FromArgb(0, 0, 0));
+                            Form1.catchBlackPixel = true;
+                            break;
+                        }
+                    }
+                    catch (Exception) { }
+                }
+
+                pictureBox1.Image = Thimage;
+            }
+
+            if (Form1.catchBlackPixel.Equals(true))
+            {
+                //label3.Text = catchThreshold.ToString();
+                return;
+            }
+            else
+            {
+                if (catchThreshold < 70)
+                {
+                    label3.Text = catchThreshold.ToString();
+                    catchThreshold += 1;
+                    blurEffect(catchThreshold);
+                }
+            }
+        }
+
+        //// Worker Thread가 실제 하는 일
+        //void worker_DoWork(object sender, DoWorkEventArgs e)
+        //{
+        //    int argument = (int)e.Argument;
+        //    blurEffect(argument);
+        //}
+
+        //// Progress 리포트 - UI Thread
+        //void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        //{
+        //    label3.Text = catchThreshold.ToString();
+        //}
+
+        //// 작업 완료 - UI Thread
+        //void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        //{
+
+        //}
+
+
+        //private void trackBar2_Scroll(object sender, EventArgs e)
+        //{
+        //    ThresholdValue = trackBar2.Value;
+        //    label1.Text = ThresholdValue.ToString();
+        //}
     }
+
 }
