@@ -34,9 +34,8 @@ namespace Eyeblink_EmguCV
         private BackgroundWorker worker;
 
         private int blurAmount = 1;
-        private int ThresholdValue = 30;
-
-
+        private int thresholdValue = 30;
+        private List<int> averageThresholdValue; 
         public static Boolean catchBlackPixel = false;
 
         public Form1()
@@ -51,6 +50,7 @@ namespace Eyeblink_EmguCV
                     _capture = new Capture();
                     _faces = new HaarCascade("C:\\haarcascade_frontalface_alt_tree.xml");
 
+                    averageThresholdValue = new List<int>();
                     worker = new BackgroundWorker();
                     worker.WorkerReportsProgress = true;
                     worker.WorkerSupportsCancellation = true;
@@ -89,8 +89,8 @@ namespace Eyeblink_EmguCV
                 }
                 catch (ArgumentException expt) { }
                 Form1.catchBlackPixel = false;
-                ThresholdValue = 50;
-                thresholdEffect(ThresholdValue);
+
+                thresholdEffect(thresholdValue);
 
                 // 비동기(Async)로 실행 
                 //worker.RunWorkerAsync(ThresholdValue);
@@ -111,8 +111,9 @@ namespace Eyeblink_EmguCV
             IFilter threshold = new Threshold(catchThreshold);
             Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
             Thimage = threshold.Apply(Thimage);
+           
             if (Thimage.Width > 50)
-                Thimage = ResizeImage(Thimage, new Size(50, 30));
+                Thimage = ResizeImage(Thimage, new Size(40, 30));
 
             Median filter = new Median();
             filter.ApplyInPlace(Thimage);
@@ -133,27 +134,34 @@ namespace Eyeblink_EmguCV
                         int avgR = (int)((prevX.R + nextX.R + prevY.R + nextY.R) / 4);
                         if (avgR < 150)
                         {
-                            //Thimage.SetPixel(x, y, Color.FromArgb(0, 0, 0));
                             Form1.catchBlackPixel = true;
                             break;
                         }
                     }
                     catch (Exception) { }
                 }
-
-                pictureBox1.Image = Thimage;
             }
 
             if (Form1.catchBlackPixel.Equals(true))
             {
-                //label3.Text = catchThreshold.ToString();
+                if (averageThresholdValue.Count > 3)
+                {
+                    averageThresholdValue.Add((averageThresholdValue[1]+averageThresholdValue[2])/2);
+                    Double doubleValue = averageThresholdValue.Average() - averageThresholdValue.Average()%10;
+                    int a = (int)doubleValue;
+                    thresholdValue = a;
+                }
+                else
+                {
+                    averageThresholdValue.Add(catchThreshold);
+                }
+                label3.Text = catchThreshold.ToString();
                 return;
             }
             else
-            {
-                if (catchThreshold < 95)
+            {   
+                if (catchThreshold < 100)
                 {
-                    label3.Text = catchThreshold.ToString();
                     catchThreshold += 1;
                     thresholdEffect(catchThreshold);
                 }
