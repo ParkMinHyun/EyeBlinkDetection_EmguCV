@@ -35,8 +35,12 @@ namespace Eyeblink_EmguCV
 
         private int blurAmount = 1;
         private int thresholdValue = 30;
-        private List<int> averageThresholdValue; 
+        private int prevThresholdValue = 0;
+        private int blinkNum = 0;
+
+        private List<int> averageThresholdValue;
         public static Boolean catchBlackPixel = false;
+        public static Boolean catchBlink = false;
 
         public Form1()
         {
@@ -49,6 +53,7 @@ namespace Eyeblink_EmguCV
                 {
                     _capture = new Capture();
                     _faces = new HaarCascade("C:\\haarcascade_frontalface_alt_tree.xml");
+
 
                     averageThresholdValue = new List<int>();
                     worker = new BackgroundWorker();
@@ -79,24 +84,20 @@ namespace Eyeblink_EmguCV
             if (!worker.IsBusy)
                 worker.RunWorkerAsync(grayFrame);
 
-
             #region 눈 영역이 Null이 아닐 경우
             if (possibleROI_rightEye.IsEmpty.Equals(false) && possibleROI_leftEye.IsEmpty.Equals(false))
             {
                 try
                 {
                     imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
+                    imageBox3.Image = frame.Copy(possibleROI_leftEye).Convert<Bgr, byte>();
+
+                    Form1.catchBlackPixel = false;
+                    thresholdEffect(thresholdValue);
+
+                    pictureBox1.Image = Thimage;
                 }
                 catch (ArgumentException expt) { }
-                Form1.catchBlackPixel = false;
-
-                thresholdEffect(thresholdValue);
-
-                // 비동기(Async)로 실행 
-                //worker.RunWorkerAsync(ThresholdValue);
-
-
-                pictureBox1.Image = Thimage;
             }
             #endregion
         }//FrameGrapper
@@ -111,14 +112,14 @@ namespace Eyeblink_EmguCV
             IFilter threshold = new Threshold(catchThreshold);
             Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
             Thimage = threshold.Apply(Thimage);
-           
+
             if (Thimage.Width > 50)
                 Thimage = ResizeImage(Thimage, new Size(40, 30));
 
             Median filter = new Median();
             filter.ApplyInPlace(Thimage);
-            ConservativeSmoothing filter2 = new ConservativeSmoothing();
-            filter.ApplyInPlace(Thimage);
+            //ConservativeSmoothing filter2 = new ConservativeSmoothing();
+            //filter.ApplyInPlace(Thimage);
 
             for (int x = blurAmount + 5; x <= Thimage.Width - blurAmount; x++)
             {
@@ -146,8 +147,8 @@ namespace Eyeblink_EmguCV
             {
                 if (averageThresholdValue.Count > 3)
                 {
-                    averageThresholdValue.Add((averageThresholdValue[1]+averageThresholdValue[2])/2);
-                    Double doubleValue = averageThresholdValue.Average() - averageThresholdValue.Average()%10;
+                    averageThresholdValue.Add((averageThresholdValue[1] + averageThresholdValue[2]) / 2);
+                    Double doubleValue = averageThresholdValue.Average() - averageThresholdValue.Average() % 10;
                     int a = (int)doubleValue;
                     thresholdValue = a;
                 }
@@ -155,14 +156,36 @@ namespace Eyeblink_EmguCV
                 {
                     averageThresholdValue.Add(catchThreshold);
                 }
-                label3.Text = catchThreshold.ToString();
+
+                if (catchThreshold > averageThresholdValue.Average() + 8 &&
+                    catchThreshold < averageThresholdValue.Average() + 25)
+                {
+                    if (!catchBlink)
+                    {
+                        blinkNum++;
+                        catchBlink = true;
+                        label3.Text = blinkNum.ToString();
+                    }
+                    else
+                    {
+                        catchBlink = true;
+                    }
+
+                }
+                else
+                {
+                    catchBlink = false;
+                }
+
+                //label2.Text = ((double)prevThresholdValue / (double)catchThreshold).ToString();
                 return;
             }
             else
-            {   
-                if (catchThreshold < 100)
+            {
+                if (catchThreshold < 120)
                 {
                     catchThreshold += 1;
+                    prevThresholdValue = catchThreshold;
                     thresholdEffect(catchThreshold);
                 }
             }
@@ -194,16 +217,18 @@ namespace Eyeblink_EmguCV
                                                      new Size(eyeAreaSize.Width - 33, eyeAreaSize.Height - 20));
                 #endregion
 
-                #region 눈 영역 그리기
-                a = new LineSegment2D(startingPointSearchEyes, endingPointSearchEyes);
-                b = new LineSegment2D(new System.Drawing.Point(lowerEyesPointOptimized.X, lowerEyesPointOptimized.Y),
-                                      new System.Drawing.Point((lowerEyesPointOptimized.X + face.rect.Width), (yCoordStartSearchEyes + searchEyesAreaSize.Height)));
-                d = new Bgr(Color.Chocolate);
+                //#region 눈 영역 그리기
+                //a = new LineSegment2D(startingPointSearchEyes, endingPointSearchEyes);
+                //b = new LineSegment2D(new System.Drawing.Point(lowerEyesPointOptimized.X, lowerEyesPointOptimized.Y),
+                //                      new System.Drawing.Point((lowerEyesPointOptimized.X + face.rect.Width), (yCoordStartSearchEyes + searchEyesAreaSize.Height)));
+                //d = new Bgr(Color.Chocolate);
 
-                //그리기
-                frame.Draw(a, d, 3);
-                frame.Draw(b, d, 3);
-                #endregion
+
+
+                ////그리기
+                //frame.Draw(a, d, 3);
+                //frame.Draw(b, d, 3);
+                //#endregion
 
                 #region 눈 영역 검출한 Rectangle의 크기가 양수일 경우에만 눈 영역 적출하기
                 if (leftEyeArea.Width > 0 && leftEyeArea.Height > 0 && rightEyeArea.Width > 0 && rightEyeArea.Height > 0)
