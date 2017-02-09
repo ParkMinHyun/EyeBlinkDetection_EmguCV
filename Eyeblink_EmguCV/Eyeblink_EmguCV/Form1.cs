@@ -52,7 +52,7 @@ namespace Eyeblink_EmguCV
                 try
                 {
                     _capture = new Capture();
-                    _faces = new HaarCascade("C:\\haarcascade_frontalface_alt_tree.xml");
+                    _faces = new HaarCascade("haarcascade_frontalface_alt_tree.xml");
 
 
                     averageThresholdValue = new List<int>();
