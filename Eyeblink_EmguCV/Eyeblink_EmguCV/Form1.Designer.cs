@@ -32,14 +32,11 @@
             this.imageBoxCapturedFrame = new Emgu.CV.UI.ImageBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.imageBox2 = new Emgu.CV.UI.ImageBox();
             this.imageBox1 = new Emgu.CV.UI.ImageBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.imageBox3 = new Emgu.CV.UI.ImageBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.imageBoxCapturedFrame)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imageBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.imageBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.imageBox3)).BeginInit();
             this.SuspendLayout();
             // 
@@ -79,16 +76,6 @@
             this.label3.TabIndex = 19;
             this.label3.Text = "0";
             // 
-            // imageBox2
-            // 
-            this.imageBox2.Location = new System.Drawing.Point(504, 431);
-            this.imageBox2.Name = "imageBox2";
-            this.imageBox2.Size = new System.Drawing.Size(48, 48);
-            this.imageBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.imageBox2.TabIndex = 20;
-            this.imageBox2.TabStop = false;
-            this.imageBox2.Visible = false;
-            // 
             // imageBox1
             // 
             this.imageBox1.Location = new System.Drawing.Point(534, 382);
@@ -97,16 +84,6 @@
             this.imageBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.imageBox1.TabIndex = 21;
             this.imageBox1.TabStop = false;
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Location = new System.Drawing.Point(440, 431);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(48, 48);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 22;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.Visible = false;
             // 
             // imageBox3
             // 
@@ -117,24 +94,30 @@
             this.imageBox3.TabIndex = 23;
             this.imageBox3.TabStop = false;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(507, 286);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(38, 12);
+            this.label1.TabIndex = 24;
+            this.label1.Text = "label1";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(664, 519);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.imageBox3);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.imageBox1);
-            this.Controls.Add(this.imageBox2);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.imageBoxCapturedFrame);
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.imageBoxCapturedFrame)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.imageBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.imageBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.imageBox3)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -146,10 +129,9 @@
         private Emgu.CV.UI.ImageBox imageBoxCapturedFrame;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private Emgu.CV.UI.ImageBox imageBox2;
         private Emgu.CV.UI.ImageBox imageBox1;
-        private System.Windows.Forms.PictureBox pictureBox1;
         private Emgu.CV.UI.ImageBox imageBox3;
+        private System.Windows.Forms.Label label1;
     }
 }
 

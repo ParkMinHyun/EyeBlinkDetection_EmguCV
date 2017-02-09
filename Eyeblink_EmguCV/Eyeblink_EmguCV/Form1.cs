@@ -25,7 +25,9 @@ namespace Eyeblink_EmguCV
         private Capture _capture;
         private HaarCascade _faces;
         private Image<Bgr, Byte> frame;
+        public static int TV = 0;
 
+        private MCvAvgComp face;
         private Rectangle possibleROI_rightEye, possibleROI_leftEye;
         private LineSegment2D a, b, c;
         private Bgr d;
@@ -54,7 +56,6 @@ namespace Eyeblink_EmguCV
                     _capture = new Capture();
                     _faces = new HaarCascade("haarcascade_frontalface_alt_tree.xml");
 
-
                     averageThresholdValue = new List<int>();
                     worker = new BackgroundWorker();
                     worker.WorkerReportsProgress = true;
@@ -81,6 +82,10 @@ namespace Eyeblink_EmguCV
             Image<Gray, Byte> grayFrame = frame.Convert<Gray, Byte>();
             grayFrame._EqualizeHist();
 
+            if(!face.Equals(null))
+            {
+                frame.Draw(face.rect, new Bgr(Color.Violet), 2);
+            }
             if (!worker.IsBusy)
                 worker.RunWorkerAsync(grayFrame);
 
@@ -94,8 +99,7 @@ namespace Eyeblink_EmguCV
 
                     Form1.catchBlackPixel = false;
                     thresholdEffect(thresholdValue);
-
-                    pictureBox1.Image = Thimage;
+                    
                 }
                 catch (ArgumentException expt) { }
             }
@@ -145,6 +149,7 @@ namespace Eyeblink_EmguCV
 
             if (Form1.catchBlackPixel.Equals(true))
             {
+                TV = catchThreshold;
                 if (averageThresholdValue.Count > 3)
                 {
                     averageThresholdValue.Add((averageThresholdValue[1] + averageThresholdValue[2]) / 2);
@@ -199,7 +204,7 @@ namespace Eyeblink_EmguCV
             MCvAvgComp[][] facesDetected = grayFrame.DetectHaarCascade(_faces, 1.1, 0, Emgu.CV.CvEnum.HAAR_DETECTION_TYPE.FIND_BIGGEST_OBJECT, new Size(20, 20));
             if (facesDetected[0].Length != 0)
             {
-                MCvAvgComp face = facesDetected[0][0];
+                face = facesDetected[0][0];
 
                 #region 얼굴 인식한것을 토대로 눈 찾기
                 Int32 yCoordStartSearchEyes = face.rect.Top + (face.rect.Height * 3 / 11);
@@ -222,8 +227,6 @@ namespace Eyeblink_EmguCV
                 //b = new LineSegment2D(new System.Drawing.Point(lowerEyesPointOptimized.X, lowerEyesPointOptimized.Y),
                 //                      new System.Drawing.Point((lowerEyesPointOptimized.X + face.rect.Width), (yCoordStartSearchEyes + searchEyesAreaSize.Height)));
                 //d = new Bgr(Color.Chocolate);
-
-
 
                 ////그리기
                 //frame.Draw(a, d, 3);
@@ -248,7 +251,7 @@ namespace Eyeblink_EmguCV
         // 작업 완료 - UI Thread
         void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-
+            label1.Text = TV.ToString();
         }
 
 
