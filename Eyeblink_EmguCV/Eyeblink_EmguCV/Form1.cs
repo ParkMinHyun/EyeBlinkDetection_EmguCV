@@ -43,7 +43,7 @@ namespace Eyeblink_EmguCV
         private List<int> averageThresholdValue;
         public static Boolean catchBlackPixel = false;
         public static Boolean catchBlink = false;
-
+        
         public Form1()
         {
             InitializeComponent();
@@ -55,18 +55,23 @@ namespace Eyeblink_EmguCV
                 {
                     _capture = new Capture();
                     _faces = new HaarCascade("haarcascade_frontalface_alt_tree.xml");
-
+                    
+                    // 평균 Threadhold값 저장하는 list 생성
                     averageThresholdValue = new List<int>();
+
+                    // Blink 기능 수행하는 Thread 생성
                     worker = new BackgroundWorker();
                     worker.WorkerReportsProgress = true;
                     worker.WorkerSupportsCancellation = true;
                     worker.DoWork += new DoWorkEventHandler(worker_DoWork);
                     worker.ProgressChanged += new ProgressChangedEventHandler(worker_ProgressChanged);
                     worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(worker_RunWorkerCompleted);
+
                 }
                 catch (NullReferenceException excpt) { }
             }
 
+            // capture가 생성 됐다면 EventHandler 추가 및 실행
             if (_capture != null)
             {
                 Application.Idle += FrameGrabber;
@@ -75,21 +80,25 @@ namespace Eyeblink_EmguCV
 
         void FrameGrabber(object sender, EventArgs e)
         {
-            //새로운 Frame 얻기
+            //새로운 Frame 얻은 후 ImageBox에 투영하기
             frame = _capture.QueryFrame();
             imageBoxCapturedFrame.Image = frame;
             //grayscale로 변환( haarcascade를 적용할 땐 회색 화면을 더 잘 잡는다고 함 )
             Image<Gray, Byte> grayFrame = frame.Convert<Gray, Byte>();
             grayFrame._EqualizeHist();
 
+            // EventHandler 주기마다 Detect한 얼굴 사각형으로 그리기
             if(!face.Equals(null))
             {
                 frame.Draw(face.rect, new Bgr(Color.Violet), 2);
             }
+            // worker 쓰레드 실행
             if (!worker.IsBusy)
                 worker.RunWorkerAsync(grayFrame);
 
             #region 눈 영역이 Null이 아닐 경우
+            // EventHandler 주기마다 worker(Thread)에서 Detect 성공한 눈 영역을 ImageBox에 투영,
+            // 그리고 threshold를 통한 눈 깜빡임 횟수 검출하는 thresholdEffect() 함수 실행
             if (possibleROI_rightEye.IsEmpty.Equals(false) && possibleROI_leftEye.IsEmpty.Equals(false))
             {
                 try
@@ -97,6 +106,7 @@ namespace Eyeblink_EmguCV
                     imageBox1.Image = frame.Copy(possibleROI_rightEye).Convert<Bgr, byte>();
                     imageBox3.Image = frame.Copy(possibleROI_leftEye).Convert<Bgr, byte>();
 
+                    // 실행하기전 눈 깜빡임을 판단하는 catchBlackPixel 값 false로 초기화
                     Form1.catchBlackPixel = false;
                     thresholdEffect(thresholdValue);
                     
@@ -106,25 +116,33 @@ namespace Eyeblink_EmguCV
             #endregion
         }//FrameGrapper
 
+
+        #region 눈 검출 방법 : 눈 떳을 때, 눈 감았을 때의 threshold 값의 변화에 따라 눈 깜빡임 인식
         public void thresholdEffect(int catchThreshold)
         {
+            // Black 픽셀이 잡힌 경우 재귀 함수 빠져나가기
             if (Form1.catchBlackPixel.Equals(true))
             {
                 return;
             }
+
+            // 눈 깜빡임을 검출할 눈 영역 Median Blur 필터 적용
             Thimage = (Bitmap)imageBox1.Image.Bitmap;
+            Median filter = new Median();
+            filter.ApplyInPlace(Thimage);
+
+            // 눈 깜빡임을 검출할 눈 영역 Threshold 필터 적용 - (catchThreshold 값으로)
             IFilter threshold = new Threshold(catchThreshold);
             Thimage = Grayscale.CommonAlgorithms.RMY.Apply(Thimage);
             Thimage = threshold.Apply(Thimage);
 
+            // 눈 검출할 영역의 가로 길이가 50mm가 넘는다면 40x30 size로 변환
+            // (카메라 가까이에 얼굴이 있으면 눈 영역도 커지기 때문에 계산량 일정하게 만들기) 
             if (Thimage.Width > 50)
                 Thimage = ResizeImage(Thimage, new Size(40, 30));
 
-            Median filter = new Median();
-            filter.ApplyInPlace(Thimage);
-            //ConservativeSmoothing filter2 = new ConservativeSmoothing();
-            //filter.ApplyInPlace(Thimage);
-
+            // 필터링 된 이미지 blur 처리 후 한 픽셀이라도 검은 Pixel이 존재한 다면 
+            // catchBlackPixel = true로 변경.
             for (int x = blurAmount + 5; x <= Thimage.Width - blurAmount; x++)
             {
                 for (int y = blurAmount + 5; y <= Thimage.Height - blurAmount; y++)
@@ -147,9 +165,13 @@ namespace Eyeblink_EmguCV
                 }
             }
 
+            // 검은 Pixel 존재 할 경우
             if (Form1.catchBlackPixel.Equals(true))
             {
+                // Tresholdvalue =  Label에 투영시킬 변수 
                 TV = catchThreshold;
+
+                // 이 동작을 3번 ㅇ
                 if (averageThresholdValue.Count > 3)
                 {
                     averageThresholdValue.Add((averageThresholdValue[1] + averageThresholdValue[2]) / 2);
@@ -162,6 +184,8 @@ namespace Eyeblink_EmguCV
                     averageThresholdValue.Add(catchThreshold);
                 }
 
+                // catchThreshold와 평균 Threshold값을 비교하여 눈 깜빡임 detect
+                // 만약 직전에도 이 값일 경우엔 Pass 
                 if (catchThreshold > averageThresholdValue.Average() + 8 &&
                     catchThreshold < averageThresholdValue.Average() + 25)
                 {
@@ -185,6 +209,8 @@ namespace Eyeblink_EmguCV
                 //label2.Text = ((double)prevThresholdValue / (double)catchThreshold).ToString();
                 return;
             }
+           // 만약 해당 이미지에 검은 픽셀이 존재하지 않을경우 
+           // catchThreshold값을 1 증가시켜 재귀 함수를 통해 다시 계산시키기
             else
             {
                 if (catchThreshold < 120)
@@ -195,6 +221,7 @@ namespace Eyeblink_EmguCV
                 }
             }
         }
+        #endregion
 
         // Worker Thread가 실제 하는 일
         void worker_DoWork(object sender, DoWorkEventArgs e)
