@@ -58,3 +58,4 @@ C:\Users\BlackMan\Documents\EyeBlink_EmguCV\Eyeblink_EmguCV\Eyeblink_EmguCV\obj\
 C:\Users\BlackMan\Documents\EyeBlink_EmguCV\Eyeblink_EmguCV\Eyeblink_EmguCV\obj\Debug\Eyeblink_EmguCV.Form1.resources
 C:\Users\BlackMan\Documents\EyeBlink_EmguCV\Eyeblink_EmguCV\Eyeblink_EmguCV\bin\Debug\haarcascade_eye.xml
 C:\Users\BlackMan\Documents\EyeBlink_EmguCV\Eyeblink_EmguCV\Eyeblink_EmguCV\bin\Debug\haarcascade_frontalface_alt_tree.xml
+C:\Users\BlackMan\Documents\EyeBlink_EmguCV\Eyeblink_EmguCV\Eyeblink_EmguCV\obj\Debug\Eyeblink_EmguCV.FaceTraining.resources

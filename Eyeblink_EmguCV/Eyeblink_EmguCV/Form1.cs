@@ -25,7 +25,8 @@ namespace Eyeblink_EmguCV
         private Capture _capture;
         private HaarCascade _faces;
         private Image<Bgr, Byte> frame;
-        public static int TV = 0;
+        private BackgroundWorker worker;
+        public static int TV = 0;               // TV = Label에 현재 Threshold값 띄어주기 위해 저장하는 변수
 
         private MCvAvgComp face;
         private Rectangle possibleROI_rightEye, possibleROI_leftEye;
@@ -33,8 +34,7 @@ namespace Eyeblink_EmguCV
         private Bgr d;
 
         private Bitmap Thimage;
-        private BackgroundWorker worker;
-
+        
         private int blurAmount = 1;
         private int thresholdValue = 30;
         private int prevThresholdValue = 0;
@@ -54,7 +54,7 @@ namespace Eyeblink_EmguCV
                 try
                 {
                     _capture = new Capture();
-                    _faces = new HaarCascade("haarcascade_frontalface_alt_tree.xml");
+                    _faces = new HaarCascade("haarcascade_frontalface_default.xml");
                     
                     // 평균 Threadhold값 저장하는 list 생성
                     averageThresholdValue = new List<int>();
@@ -92,6 +92,7 @@ namespace Eyeblink_EmguCV
             {
                 frame.Draw(face.rect, new Bgr(Color.Violet), 2);
             }
+
             // worker 쓰레드 실행
             if (!worker.IsBusy)
                 worker.RunWorkerAsync(grayFrame);
@@ -109,14 +110,12 @@ namespace Eyeblink_EmguCV
                     // 실행하기전 눈 깜빡임을 판단하는 catchBlackPixel 값 false로 초기화
                     Form1.catchBlackPixel = false;
                     thresholdEffect(thresholdValue);
-                    
                 }
                 catch (ArgumentException expt) { }
             }
             #endregion
         }//FrameGrapper
-
-
+        
         #region 눈 검출 방법 : 눈 떳을 때, 눈 감았을 때의 threshold 값의 변화에 따라 눈 깜빡임 인식
         public void thresholdEffect(int catchThreshold)
         {
